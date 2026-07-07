@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import unicodedata
 
 # 1. Configuración visual de la página
 st.set_page_config(page_title="Portal de Vacaciones", page_icon="🌴", layout="centered")
@@ -14,7 +15,7 @@ def cargar_datos_locales():
     df_base = pd.read_excel('Prototipo_Vacaciones_Nombre.xlsx', sheet_name='Base_Historica')
     df_cons = pd.read_excel('Prototipo_Vacaciones_Nombre.xlsx', sheet_name='Consolidado')
     
-    # TRUCO DE ORO: Convertir a texto, quitar decimales si se crearon y rellenar con ceros hasta tener 10 dígitos
+    # Truco para corregir los ceros a la izquierda de las cédulas de Azuay
     df_cons['Cédula'] = df_cons['Cédula'].astype(str).str.split('.').str[0].str.zfill(10)
     df_base['Cédula'] = df_base['Cédula'].astype(str).str.split('.').str[0].str.zfill(10)
     
@@ -26,12 +27,19 @@ except Exception as e:
     st.error("⚠️ No se pudo cargar el archivo Excel. Asegúrate de que 'Prototipo_Vacaciones_Nombre.xlsx' esté subido en tu repositorio de GitHub.")
     st.stop()
 
-# 3. Interfaz de búsqueda por Cédula
+# 3. Formulario de búsqueda con botón de Enter
 st.subheader("Consulta tu saldo")
-cedula_input = st.text_input("Ingrese su número de cédula:", max_chars=10, placeholder="Ej: 0102030405")
 
-if cedula_input:
-    # Limpiar el texto que ingresa el usuario por si acaso tenga espacios
+# Creamos el formulario invisible para agrupar los elementos
+with st.form(key='formulario_cedula', clear_on_submit=False):
+    cedula_input = st.text_input("Ingrese su número de cédula:", max_chars=10, placeholder="Ej: 0102030405")
+    
+    # Este es el botón físico que el usuario debe presionar
+    boton_buscar = st.form_submit_button(label="Consultar Vacaciones")
+
+# 4. Lógica que se ejecuta SOLO si presionan el botón o dan Enter en el teclado
+if boton_buscar and cedula_input:
+    # Limpiar el formato de la cédula ingresada
     cedula_input = str(cedula_input).strip().zfill(10)
 
     # Buscar coincidencia en el Consolidado
