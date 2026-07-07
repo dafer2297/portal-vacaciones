@@ -8,12 +8,16 @@ st.title("Sistema de Consulta de Vacaciones")
 st.write("Departamento de Talento Humano - Prefectura del Azuay")
 st.divider()
 
-# 2. Función para leer las hojas del Excel que está en el repositorio
+# 2. Función para leer las hojas del Excel
 @st.cache_data
 def cargar_datos_locales():
-    # Al estar en el mismo repositorio de GitHub, se lee directamente por su nombre
     df_base = pd.read_excel('Prototipo_Vacaciones_Nombre.xlsx', sheet_name='Base_Historica')
     df_cons = pd.read_excel('Prototipo_Vacaciones_Nombre.xlsx', sheet_name='Consolidado')
+    
+    # TRUCO DE ORO: Convertir a texto, quitar decimales si se crearon y rellenar con ceros hasta tener 10 dígitos
+    df_cons['Cédula'] = df_cons['Cédula'].astype(str).str.split('.').str[0].str.zfill(10)
+    df_base['Cédula'] = df_base['Cédula'].astype(str).str.split('.').str[0].str.zfill(10)
+    
     return df_base, df_cons
 
 try:
@@ -27,10 +31,8 @@ st.subheader("Consulta tu saldo")
 cedula_input = st.text_input("Ingrese su número de cédula:", max_chars=10, placeholder="Ej: 0102030405")
 
 if cedula_input:
-    # Limpiar formatos para asegurar que coincidan las búsquedas
-    cedula_input = str(cedula_input).strip()
-    df_cons['Cédula'] = df_cons['Cédula'].astype(str).str.strip()
-    df_base['Cédula'] = df_base['Cédula'].astype(str).str.strip()
+    # Limpiar el texto que ingresa el usuario por si acaso tenga espacios
+    cedula_input = str(cedula_input).strip().zfill(10)
 
     # Buscar coincidencia en el Consolidado
     empleado_info = df_cons[df_cons['Cédula'] == cedula_input]
@@ -59,4 +61,4 @@ if cedula_input:
         else:
             st.info("No tienes peticiones de vacaciones registradas.")
     else:
-        st.error("❌ Cédula no encontrada en el simulador. Intenta con: 0102030405 o 0102030408")
+        st.error("❌ Cédula no encontrada en el simulador. Intenta con las cédulas del prototipo: 0102030405, 0102030406, 0102030407, 0102030408 o 0102030409")
